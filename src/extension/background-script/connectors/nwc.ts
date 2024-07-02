@@ -1,4 +1,4 @@
-import { NWCClient } from "@getalby/sdk/dist/NWCClient";
+import { nwc } from "@getalby/sdk";
 import lightningPayReq from "bolt11-signet";
 import Hex from "crypto-js/enc-hex";
 import SHA256 from "crypto-js/sha256";
@@ -28,7 +28,7 @@ interface Config {
 
 class NWCConnector implements Connector {
   config: Config;
-  nwc: NWCClient;
+  nwc: nwc.NWCClient;
 
   get supportedMethods() {
     return [
@@ -45,7 +45,7 @@ class NWCConnector implements Connector {
 
   constructor(account: Account, config: Config) {
     this.config = config;
-    this.nwc = new NWCClient({
+    this.nwc = new nwc.NWCClient({
       nostrWalletConnectUrl: this.config.nostrWalletConnectUrl,
     });
   }

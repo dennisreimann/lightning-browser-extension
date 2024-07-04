@@ -130,11 +130,6 @@ export interface ConnectPeerArgs {
   host: string;
 }
 
-export interface TlvRecord {
-  type: number;
-  value: string;
-}
-
 export default interface Connector {
   init(): Promise<void>;
   unload(): Promise<void>;

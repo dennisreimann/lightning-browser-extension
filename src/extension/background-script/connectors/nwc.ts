@@ -19,11 +19,15 @@ import Connector, {
   SendPaymentResponse,
   SignMessageArgs,
   SignMessageResponse,
-  TlvRecord,
 } from "./connector.interface";
 
 interface Config {
   nostrWalletConnectUrl: string;
+}
+
+interface TlvRecord {
+  type: number;
+  value: string;
 }
 
 class NWCConnector implements Connector {
@@ -103,24 +107,14 @@ class NWCConnector implements Connector {
       amount:
         typeof args.amount === "number"
           ? args.amount
-          : parseFloat(args.amount) || 0,
+          : parseInt(args.amount) || 0,
       description: args.memo,
     });
-    let rHash = invoice.payment_hash;
-
-    if (!rHash) {
-      const decodedInvoice = lightningPayReq.decode(invoice.invoice);
-      rHash = decodedInvoice.tags.find((tag) => tag.tagName === "payment_hash")
-        ?.data as string;
-      if (!rHash) {
-        throw new Error("Could not find payment hash in invoice");
-      }
-    }
 
     return {
       data: {
         paymentRequest: invoice.invoice,
-        rHash,
+        rHash: invoice.payment_hash,
       },
     };
   }
@@ -137,9 +131,6 @@ class NWCConnector implements Connector {
     const response = await this.nwc.payInvoice({
       invoice: args.paymentRequest,
     });
-    const total_amt = invoice.millisatoshis
-      ? parseInt(invoice.millisatoshis || "0", 10) / 1000
-      : invoice.satoshis ?? 0;
 
     return {
       data: {
@@ -147,7 +138,7 @@ class NWCConnector implements Connector {
         paymentHash,
         route: {
           // TODO: how to get amount paid for zero-amount invoices?
-          total_amt: total_amt,
+          total_amt: parseInt(invoice.millisatoshis || "0") / 1000,
           // TODO: How to get fees from WebLN?
           total_fees: 0,
         },
@@ -158,7 +149,7 @@ class NWCConnector implements Connector {
   async keysend(args: KeysendArgs): Promise<SendPaymentResponse> {
     const data = await this.nwc.payKeysend({
       pubkey: args.pubkey,
-      amount: args.amount,
+      amount: args.amount * 1000,
       tlv_records: this.convertCustomRecords(args.customRecords),
     });
 
